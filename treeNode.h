@@ -5,6 +5,7 @@
 
 #include "rectangle.h"
 #include "rtree.h"
+
 using namespace std;
 
 class TreeNode {
@@ -38,9 +39,9 @@ class TreeNode {
         
         virtual TreeNode* createSplitNode();
         
-        virtual void addEntryToSplitNode(uint32_t entryIdx, TreeNode* splitNode);
+        void addEntryToSplitNode(uint32_t entryIdx, TreeNode* splitNode);
         
-        virtual void copyNodeContent(TreeNode* node);
+        void copyNodeContent(TreeNode* node);
 
         void addData(uint32_t* data);
 
@@ -53,8 +54,9 @@ class TreeNode {
     public:
         TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
         virtual ~TreeNode();
-        virtual uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, uint32_t id, RTree* rTree);
-        virtual TreeNode* remove(Rectangle MBR, uint32_t id);
+        virtual uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree);
+
+    friend class RTree;
 
 };
 

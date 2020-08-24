@@ -12,20 +12,13 @@ class LeafNode : public TreeNode {
     */
     
     private:
-        uint32_t* id_; // Store ID of each entry. Can be used to store other data
-        
-        void addEntry(Rectangle MBR, uint32_t* data, uint32_t pointer, uint32_t id);
-        
         TreeNode* createSplitNode();
-        
-        void addEntryToSplitNode(uint32_t entryIdx, TreeNode* splitNode);
-        
-        void copyNodeContent(TreeNode* node);
     
     public:
         LeafNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
-        ~LeafNode();
-        uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, uint32_t id, RTree* rTree);
+        uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree);
+
+    friend class RTree;
 };
 
 #endif

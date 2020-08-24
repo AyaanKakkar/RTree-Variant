@@ -1,5 +1,7 @@
 #include "treeNode.h"
 
+using namespace std;
+
 // Constructor
 TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize) {
     
@@ -34,7 +36,7 @@ TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize) 
 
 // Insert an entry into the subtree
 // Returns -1 if entry successful, otherwise returns the ID of the new node that must be inserted into the parent
-uint32_t TreeNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, uint32_t id, RTree* rTree) {
+uint32_t TreeNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree) {
     
     // Update the MBR
     currentMBR_ = Rectangle::combine(currentMBR_, MBR);
@@ -64,14 +66,16 @@ uint32_t TreeNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, uint3
     TreeNode* childNode = rTree -> getNode(childPointers_[childIdx]);
 
     // Insert into that node
-    uint32_t newNodeID = childNode -> insert(MBR, data, pointer, id, rTree);
+    uint32_t newNodeID = childNode -> insert(MBR, data, pointer, rTree);
 
     // Update that node's MBR
-    
     MBR_[childIdx] = childNode -> currentMBR_;
     
     // Update that node's data
     updateChildData(childNode -> nodeData_, childIdx);
+
+    // Free the memory
+    delete childNode;
 
     // Perform addition if necessary
     if (newNodeID != -1) {
@@ -79,6 +83,9 @@ uint32_t TreeNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, uint3
         TreeNode* newNode = rTree -> getNode(newNodeID);
         addEntry(newNode -> currentMBR_, newNode -> nodeData_, newNodeID);   
         
+        // Free the memory
+        delete newNode;
+
         // Perform splitting if necessary and return the new noe formed
         if (currEntries_ > maxEntries_) {
             return split(rTree);
@@ -151,12 +158,13 @@ uint32_t TreeNode::split(RTree* rTree) {
     // Transfer the contents of one node to the current node
     copyNodeContent(splitNode1);
 
-    // Delete the node
-    delete splitNode1;
-
     // Save the changes to the disk
     rTree -> saveNode(splitNode2);  
     rTree -> saveNode(this);
+
+    // Free the memory
+    delete splitNode1;
+    delete splitNode2;
 
     // Return the newly created node
     return splitNode2 -> nodeID_;
