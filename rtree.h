@@ -1,10 +1,11 @@
 #ifndef _RTREE
 #define _RTREE
 
-#include "treeNode.h"
-#include "leafNode.h"
 #include <string>
 #include <fstream>
+#include "rectangle.h"
+#include "treeNode.h"
+#include "leafNode.h"
 
 using namespace std;
 
@@ -52,7 +53,7 @@ class RTree {
         
         static RTree* createIndex(string fileName, uint32_t pageSize, uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
         
-        void insert(Rectangle MBR, uint32_t* data, uint32_t pointer, uint32_t id);
+        void insert(Rectangle MBR, uint32_t* data, uint32_t pointer);
 
         ~RTree();
 

@@ -1,9 +1,9 @@
 #ifndef _LEAFNODE
 #define _LEAFNODE
-
 #include "treeNode.h"
 
 using namespace std;
+
 
 class LeafNode : public TreeNode {
     

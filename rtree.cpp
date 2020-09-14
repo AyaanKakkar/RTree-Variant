@@ -1,5 +1,5 @@
-#include <rtree.h>
 #include <typeinfo>
+#include "rtree.h"
 
 using namespace std;
 
@@ -19,14 +19,16 @@ RTree* RTree::createIndex(string fileName, uint32_t pageSize, uint32_t maxEntrie
     rTree -> rootNode_ = nullptr;
     
     // Open the file
-    rTree -> filePointer_.open(fileName, ios::binary | ios::in | ios::out);
+    rTree -> filePointer_.open(fileName, ios::binary | ios::in | ios::out | ios::trunc);
 
     // Save the tree
     rTree -> saveTree();
+
+    return rTree;
 }
 
 // Insert an entry into the RTree
-void RTree::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, uint32_t id) {
+void RTree::insert(Rectangle MBR, uint32_t* data, uint32_t pointer) {
     if (treeSize_ == 0) {
         // If it's an empty tree then create a root node
         this -> rootNode_ = new LeafNode(maxEntries_, minEntries_, dataSize_);

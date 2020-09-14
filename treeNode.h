@@ -2,11 +2,11 @@
 #define _TREENODE
 
 #include <cstdint>
-
 #include "rectangle.h"
-#include "rtree.h"
 
 using namespace std;
+
+class RTree;
 
 class TreeNode {
 
