@@ -1,5 +1,6 @@
 #include "leafNode.h"
 #include "rtree.h"
+#include <iostream>
 
 using namespace std;
 
@@ -22,6 +23,21 @@ uint32_t LeafNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree
     rTree -> saveNode(this);
 
     return -1;
+}
+
+// Print the tree
+void LeafNode::printTree(RTree* rTree) {
+    cout << "LEAFNODE" << endl;
+    cout << "Node ID : " << nodeID_ << endl;
+    cout << "Current Entries : " << currEntries_ << endl;
+    cout << "Child Pointers : ";
+    for (int idx = 0; idx < currEntries_; idx++) {
+        cout << childPointers_[idx];
+        if (idx < currEntries_ - 1) {
+            cout << ", ";
+        }
+    }
+    cout << endl;
 }
 
 

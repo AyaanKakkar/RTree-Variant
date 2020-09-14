@@ -1,5 +1,6 @@
 #include "treeNode.h"
 #include "rtree.h"
+#include <iostream>
 
 using namespace std;
 
@@ -163,12 +164,15 @@ uint32_t TreeNode::split(RTree* rTree) {
     rTree -> saveNode(splitNode2);  
     rTree -> saveNode(this);
 
+    // Return ID
+    uint32_t returnID = splitNode2 -> nodeID_;
+
     // Free the memory
     delete splitNode1;
     delete splitNode2;
 
-    // Return the newly created node
-    return splitNode2 -> nodeID_;
+    // Return the newly creater node's ID
+    return returnID;
 
 }
 
@@ -277,6 +281,27 @@ void TreeNode::copyNodeData(TreeNode* node) {
             data_[entryIdx][idx] = node -> data_[entryIdx][idx];
         }
     }
+}
+
+// Print the tree
+void TreeNode::printTree(RTree* rTree) {
+    cout << "Node ID : " << nodeID_ << endl;
+    cout << "Current Entries : " << currEntries_ << endl;
+    cout << "Child Pointers : ";
+    for (int idx = 0; idx < currEntries_; idx++) {
+        cout << childPointers_[idx];
+        if (idx < currEntries_ - 1) {
+            cout << ", ";
+        }
+    }
+    cout << endl;
+    for (int idx = 0; idx < currEntries_; idx++) {
+        cout << "~~~~~~~~~~~~~~~~~~~~~~~" << endl;
+        cout << "Parent Node ID : " << nodeID_ << endl;
+        TreeNode* childNode = rTree -> getNode(childPointers_[idx]);
+        childNode -> printTree(rTree);
+    }
+    cout << endl;
 }
 
 // Free the data

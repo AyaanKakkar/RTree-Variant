@@ -55,6 +55,8 @@ class RTree {
         
         void insert(Rectangle MBR, uint32_t* data, uint32_t pointer);
 
+        void printTree();
+
         ~RTree();
 
     friend class TreeNode;

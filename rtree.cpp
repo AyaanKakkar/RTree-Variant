@@ -1,4 +1,5 @@
 #include <typeinfo>
+#include <iostream>
 #include "rtree.h"
 
 using namespace std;
@@ -117,6 +118,7 @@ void RTree::writeNode(TreeNode* node, uint32_t page) {
         }
     }
 
+    filePointer_.flush();
 }
 
 
@@ -183,6 +185,8 @@ void RTree::saveTree() {
     filePointer_.write((char *) &minEntries_, sizeof(minEntries_));
 
     filePointer_.write((char *) &dataSize_, sizeof(dataSize_));   
+
+    filePointer_.flush();
     
 }
 
@@ -217,6 +221,16 @@ RTree* RTree::LoadIndex(string fileName) {
     }
 
     return rTree;
+}
+
+// Print the entire tree
+void RTree::printTree() {
+    cout << "----------------R Tree---------------" << endl;
+    cout << "Expected Root ID : " << rootID_ << endl;
+    cout << "Actual Root ID : " << rootNode_ -> nodeID_ << endl;
+    cout <<  endl;
+    rootNode_ -> printTree(this);
+    cout << "-------------------------------------" << endl;
 }
 
 // Destructor

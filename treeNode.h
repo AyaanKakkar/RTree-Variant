@@ -51,10 +51,12 @@ class TreeNode {
 
         void freeData();
 
+
     public:
         TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
         virtual ~TreeNode();
         virtual uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree);
+        virtual void printTree(RTree* rTree);
 
     friend class RTree;
 

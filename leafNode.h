@@ -12,11 +12,12 @@ class LeafNode : public TreeNode {
     */
     
     private:
-        TreeNode* createSplitNode();
+        virtual TreeNode* createSplitNode();
     
     public:
         LeafNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
-        uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree);
+        virtual uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree);
+        virtual void printTree(RTree* rTree);
 
     friend class RTree;
 };
