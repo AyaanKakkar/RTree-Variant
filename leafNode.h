@@ -13,10 +13,11 @@ class LeafNode : public TreeNode {
     
     private:
         virtual TreeNode* createSplitNode();
+        void addLeafEntry(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events, uint32_t eventsCount);
     
     public:
-        LeafNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
-        virtual uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree);
+        LeafNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize);
+        virtual uint32_t insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events, uint32_t eventsCount, RTree* rTree);
         virtual void printTree(RTree* rTree);
 
     friend class RTree;

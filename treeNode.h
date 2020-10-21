@@ -1,8 +1,10 @@
 #ifndef _TREENODE
 #define _TREENODE
-
+#define TIMESLOTS 24
 #include <cstdint>
+#include <list>
 #include "rectangle.h"
+#include "event.h"
 
 using namespace std;
 
@@ -19,7 +21,7 @@ class TreeNode {
         uint32_t maxEntries_; // Max Number of entries in the node
         uint32_t minEntries_; // Min number of entries in the node
         uint32_t currEntries_; // Number of current entries
-        uint32_t dataSize_; // Size of data array;
+        uint32_t bitmapSize_; // Size of bitmap array;
         
         Rectangle currentMBR_; // MBR of the current node
         
@@ -27,11 +29,15 @@ class TreeNode {
         
         uint32_t* childPointers_; // Child Pointers (Stores the ID of each child)
 
-        uint32_t** data_; // Data corresponding to each child
+        uint32_t** bitmap_; // Bitmap corresponding to each child
 
-        uint32_t* nodeData_;
+        uint32_t* nodeBitmap_; // Bitmap corresponding to the entire node
 
-        void addEntry(Rectangle MBR, uint32_t* data, uint32_t pointer);
+        list<Event>* childEvents_; // Child Events Linked List
+
+        list<list<Event>::iterator> ** childTimeSlots_; // Time Slots Hash Buckets for each child
+
+        void addEntry(Rectangle MBR, uint32_t* bitmap, list<Event>* events, uint32_t eventsListCount, uint32_t pointer);
         
         uint32_t split(RTree *rTree);
         
@@ -43,19 +49,29 @@ class TreeNode {
         
         void copyNodeContent(TreeNode* node);
 
-        void addData(uint32_t* data);
+        void addBitmap(uint32_t* bitmap);
 
-        void updateChildData(uint32_t* data, uint32_t childIdx);
+        void addBitmapToChild(uint32_t* bitmap, uint32_t childIdx);
 
-        void copyNodeData(TreeNode* node);
+        void addEventsToChild(Event* events, uint32_t eventsCount, uint32_t childIdx);
 
-        void freeData();
+        void updateChildBitmap(uint32_t* bitmap, uint32_t childIdx);
+
+        void updateChildEvents(list<Event>* events, uint32_t eventsListCount, uint32_t childIdx);
+
+        void copyNodeBitmap(TreeNode* node);
+
+        void copyNodeEvents(TreeNode* node);
+
+        void freeBitmap();
+
+        void freeEvents();
 
 
     public:
-        TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
+        TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize);
         virtual ~TreeNode();
-        virtual uint32_t insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree);
+        virtual uint32_t insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events, uint32_t eventsCount, RTree* rTree);
         virtual void printTree(RTree* rTree);
 
     friend class RTree;

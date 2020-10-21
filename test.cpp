@@ -7,7 +7,7 @@ using namespace std;
 int N = 10000;
 
 int main(int argc, char* argv[]) {
-    
+
     if (argc == 2) {
         N = atoi(argv[1]);
     } 
@@ -19,14 +19,22 @@ int main(int argc, char* argv[]) {
         int maxX = minX + (rand() % 10);
         int minY = rand() % 10;
         int maxY = minY + (rand() % 10);
+        
         Rectangle temp(minX, maxX, minY, maxY);
+        
         uint32_t *dataTemp = new uint32_t[2];
+        
         dataTemp[0] = 1;
         dataTemp[1] = 2;
+        
         rtree->insert(temp, dataTemp, i);
+        
         if (N < 50) {
             rtree->printTree();
         }
+        
+        cout << "Nodes Accessed : " << rtree->nodesAccessed_ << endl;
+
         delete dataTemp;
     }
 

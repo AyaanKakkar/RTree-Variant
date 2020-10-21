@@ -1,4 +1,5 @@
 #include <rectangle.h>
+#include <iostream>
 #include <cmath>
 
 using namespace std;
@@ -56,6 +57,12 @@ long double Rectangle::getAreaEnlargement(const Rectangle& rect) {
     return combine(*this, rect).getArea() - getArea();
 }
 
+// Check if the rectange contains a particular point
+bool Rectangle::containsPoint(long double x, long double y) {
+    return (x <= maxX_ && x >= minX_) && (y <= maxY_ && y >= minY_);
+}
+
+
 // Calculate the euclidean distance between the midpoints of the two rectangles
 long double Rectangle::distance(const Rectangle& rect1, const Rectangle& rect2) {
 
@@ -65,4 +72,10 @@ long double Rectangle::distance(const Rectangle& rect1, const Rectangle& rect2) 
     long double midY2 = (rect2.maxY_ + rect2.minY_) / 2;
 
     return sqrt((midX1 - midX2) * (midX1 - midX2) + (midY1 - midY2) * (midY1 - midY2));
+}
+
+// Print the rectangle
+void Rectangle::print() {
+    cout << "(X : " << minX_ << " - " << maxX_ << "; ";
+    cout << "Y : " << minY_ << " - " << maxY_ << ")";
 }

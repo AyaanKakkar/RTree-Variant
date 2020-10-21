@@ -31,7 +31,7 @@ class RTree {
         
         uint32_t minEntries_; // Min Entries in the node
         
-        uint32_t dataSize_; // Size of the data array
+        uint32_t bitmapSize_; // Size of the bitmap
         
         TreeNode* rootNode_; // Pointer to the root node
 
@@ -51,13 +51,15 @@ class RTree {
         
         static RTree* LoadIndex(string fileName);
         
-        static RTree* createIndex(string fileName, uint32_t pageSize, uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize);
+        static RTree* createIndex(string fileName, uint32_t pageSize, uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize);
         
-        void insert(Rectangle MBR, uint32_t* data, uint32_t pointer);
+        void insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events = nullptr, uint32_t eventsCount = 0);
 
         void printTree();
 
         ~RTree();
+
+        uint32_t nodesAccessed_;
 
     friend class TreeNode;
     friend class LeafNode;

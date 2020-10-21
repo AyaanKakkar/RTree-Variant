@@ -5,12 +5,12 @@
 using namespace std;
 
 // Constructor
-TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize) {
+TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize) {
     
     nodeID_ = -1;
     maxEntries_ = maxEntries;
     minEntries_ = minEntries;
-    dataSize_ = dataSize_;
+    bitmapSize_ = bitmapSize;
 
     currEntries_ = 0;
     
@@ -19,32 +19,39 @@ TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t dataSize) 
     MBR_ = new Rectangle[maxEntries_ + 1];
     
     childPointers_ = new uint32_t[maxEntries_ + 1];
-    
 
-    nodeData_ = new uint32_t[dataSize_]; 
-    for (uint32_t idx = 0; idx < dataSize_; idx++) {
-        nodeData_[idx] = 0;
+    nodeBitmap_ = new uint32_t[bitmapSize_]; 
+    for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
+        nodeBitmap_[idx] = 0;
     }
 
-    data_ = new uint32_t*[maxEntries_ + 1];
+    bitmap_ = new uint32_t*[maxEntries_ + 1];
     for (uint32_t idx = 0; idx < maxEntries_ + 1; idx++) {
-        data_[idx] = new uint32_t[dataSize_];
-        for (uint32_t dataIdx = 0; dataIdx < dataSize_; dataIdx++) {
-            data_[idx][dataIdx] = 0;
+        bitmap_[idx] = new uint32_t[bitmapSize_];
+        for (uint32_t bitmapIdx = 0; bitmapIdx < bitmapSize_; bitmapIdx++) {
+            bitmap_[idx][bitmapIdx] = 0;
         }
     }
+
+    childEvents_ = new list<Event>[maxEntries_ + 1];
+    
+    childTimeSlots_ = new list<list<Event>::iterator> *[maxEntries_ + 1];
+    for (uint32_t idx = 0; idx < maxEntries_ + 1; idx++) {
+        childTimeSlots_[idx] = new list<list<Event>::iterator>[TIMESLOTS];
+    }
+
 }
 
 
 // Insert an entry into the subtree
 // Returns -1 if entry successful, otherwise returns the ID of the new node that must be inserted into the parent
-uint32_t TreeNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree* rTree) {
+uint32_t TreeNode::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events, uint32_t eventsCount, RTree* rTree) {
     
     // Update the MBR
     currentMBR_ = Rectangle::combine(currentMBR_, MBR);
 
-    // Add the data
-    addData(data);
+    // Add the bitmap to the entire node's bitmap
+    addBitmap(bitmap);
 
     // Calculate the index of the child to traverse to
     uint32_t childIdx = -1;
@@ -64,35 +71,49 @@ uint32_t TreeNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree
         }
     } 
 
+    // Add new events to child data
+    addEventsToChild(events, eventsCount, childIdx);
+
+    // Add bitmap to child
+    addBitmapToChild(bitmap, childIdx);
+
     // Get that child node
     TreeNode* childNode = rTree -> getNode(childPointers_[childIdx]);
 
     // Insert into that node
-    uint32_t newNodeID = childNode -> insert(MBR, data, pointer, rTree);
+    uint32_t newNodeID = childNode -> insert(MBR, bitmap, pointer, events, eventsCount,rTree);
 
     // Update that node's MBR
     MBR_[childIdx] = childNode -> currentMBR_;
-    
-    // Update that node's data
-    updateChildData(childNode -> nodeData_, childIdx);
-
-    // Free the memory
-    delete childNode;
 
     // Perform addition if necessary
     if (newNodeID != -1) {
+        
+        // Update that child's bitmap and events
+        updateChildBitmap(childNode->nodeBitmap_, childIdx);
+        updateChildEvents(childNode->childEvents_, childNode -> currEntries_, childIdx);
+
         // Get the new node
         TreeNode* newNode = rTree -> getNode(newNodeID);
-        addEntry(newNode -> currentMBR_, newNode -> nodeData_, newNodeID);   
+
+        // Add that node info
+        addEntry(newNode -> currentMBR_, newNode -> nodeBitmap_, newNode -> childEvents_, newNode -> currEntries_, newNodeID);   
         
         // Free the memory
         delete newNode;
-
+        
         // Perform splitting if necessary and return the new noe formed
         if (currEntries_ > maxEntries_) {
+            
+            // Free memory
+            delete childNode;
+
             return split(rTree);
         }
     }
+
+    // Free the memory
+    delete childNode;
 
     // Save changes to the disk
     rTree -> saveNode(this);
@@ -101,7 +122,7 @@ uint32_t TreeNode::insert(Rectangle MBR, uint32_t* data, uint32_t pointer, RTree
 }
 
 // Add an entry in the node
-void TreeNode::addEntry(Rectangle MBR, uint32_t* data, uint32_t pointer) {
+void TreeNode::addEntry(Rectangle MBR, uint32_t* bitmap, list<Event>* events, uint32_t eventsListCount, uint32_t pointer) {
 
     MBR_[currEntries_] = MBR;
     
@@ -112,7 +133,8 @@ void TreeNode::addEntry(Rectangle MBR, uint32_t* data, uint32_t pointer) {
         currentMBR_ = Rectangle::combine(currentMBR_, MBR_[currEntries_]);
     }
 
-    updateChildData(data, currEntries_);
+    updateChildBitmap(bitmap, currEntries_);
+    updateChildEvents(events, eventsListCount, currEntries_);
 
     childPointers_[currEntries_] = pointer;
     currEntries_++;
@@ -222,12 +244,12 @@ TreeNode* TreeNode::chooseSplitNode(uint32_t entryIdx, TreeNode* splitNode1, Tre
 
 // Create a split node
 TreeNode* TreeNode::createSplitNode() {
-    return new TreeNode(maxEntries_, minEntries_, dataSize_);
+    return new TreeNode(maxEntries_, minEntries_, bitmapSize_);
 }
 
 // Add entry to a split node
 void TreeNode::addEntryToSplitNode(uint32_t entryIdx, TreeNode* splitNode) {
-    splitNode->addEntry(MBR_[entryIdx], data_[entryIdx], childPointers_[entryIdx]);
+    splitNode->addEntry(MBR_[entryIdx], bitmap_[entryIdx], &childEvents_[entryIdx], 1, childPointers_[entryIdx]);
 }
 
 // Copy content from a node
@@ -238,47 +260,152 @@ void TreeNode::copyNodeContent(TreeNode* node) {
         MBR_[idx] = node -> MBR_[idx];
         childPointers_[idx] = node -> childPointers_[idx];
     }
-    copyNodeData(node);
+    copyNodeBitmap(node);
+    copyNodeEvents(node);
 }
 
 // Destructor
 TreeNode::~TreeNode() {
     delete MBR_;
     delete childPointers_;
-    freeData();
+    freeBitmap();
+    freeEvents();
 }
 
-// Add Data to the current node
-void TreeNode::addData(uint32_t* data) {
-    for (uint32_t idx = 0; idx < dataSize_; idx++) {
-        nodeData_[idx] += data[idx];
-    }
-}
-
-// Change the data of a child
-void TreeNode::updateChildData(uint32_t* data, uint32_t childIdx) {
-    // Update node data
-    for (uint32_t idx = 0; idx < dataSize_; idx++) {
-        nodeData_[idx] += (data[idx] - data_[childIdx][idx]);
-    }
-
-    // Update child data 
-    for (uint32_t idx = 0; idx < dataSize_; idx++) {
-        data_[childIdx][idx] = data[idx];
+// Add Bitmap to the current node
+void TreeNode::addBitmap(uint32_t* bitmap) {
+    for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
+        nodeBitmap_[idx] += bitmap[idx];
     }
 }
 
-// Copy the data of a node
-void TreeNode::copyNodeData(TreeNode* node) {
-    // Update node data
-    for (uint32_t idx = 0; idx < dataSize_; idx++) {
-        nodeData_[idx] = node -> nodeData_[idx];
+// Add bitmap to child data
+void TreeNode::addBitmapToChild(uint32_t* bitmap, uint32_t childIdx) {
+    // Update child bitmap 
+    for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
+        bitmap_[childIdx][idx] += bitmap[idx];
+    }
+}
+
+// Add events to child data
+void TreeNode::addEventsToChild(Event* events, uint32_t eventsCount, uint32_t childIdx) {
+    // Loop over all events
+    for (uint32_t idx = 0; idx < eventsCount; idx++) {
+        // Create a copy of the event
+        Event temp = events[idx];
+
+        // Add copy to list of all events
+        childEvents_[childIdx].push_back(temp);
+
+        // Get iterator to that event
+        list<Event>::iterator it = childEvents_[childIdx].end();
+        advance(it, -1);
+
+        // Loop over all time slots
+        for (uint32_t slotIdx = 0; slotIdx < TIMESLOTS; slotIdx++) {
+            
+            uint16_t slotDuration = (60 * 24) / TIMESLOTS;
+            uint16_t startTime = slotDuration * slotIdx;
+            uint16_t endTime = startTime + slotDuration - 1;
+            
+            // Add to time slot if required
+            if (temp.existsAtTimeInterval(startTime, endTime)) {
+                childTimeSlots_[childIdx][slotIdx].push_back(it);
+            }
+        }
+    }
+}
+
+// Update events of a child
+void TreeNode::updateChildEvents(list<Event>* events, uint32_t eventsListCount, uint32_t childIdx) {
+    
+    // Clear everything
+    childEvents_[childIdx].clear();
+    for (uint32_t idx = 0; idx < TIMESLOTS; idx++) {
+        childTimeSlots_[childIdx][idx].clear();
     }
 
-    // Update child data 
+    // Loop over all lists
+    for (uint32_t listIdx = 0; listIdx < eventsListCount; listIdx++) {
+        // Append list to the end 
+        childEvents_[childIdx].insert(childEvents_[childIdx].end(), events[listIdx].begin(), events[listIdx].end());
+    }
+
+    // Hash into time slots
+    // Loop over all events
+    for (list<Event>::iterator it = childEvents_[childIdx].begin(); it != childEvents_[childIdx].end(); it++) {
+        // Loop over all time slots
+        for (uint32_t slotIdx = 0; slotIdx < TIMESLOTS; slotIdx++) {
+            
+            uint16_t slotDuration = (60 * 24) / TIMESLOTS;
+            uint16_t startTime = slotDuration * slotIdx;
+            uint16_t endTime = startTime + slotDuration - 1;
+            
+            // Add to time slot if required
+            if (it -> existsAtTimeInterval(startTime, endTime)) {
+                childTimeSlots_[childIdx][slotIdx].push_back(it);
+            }
+        }
+    }
+}
+
+// Change the bitmap of a child
+void TreeNode::updateChildBitmap(uint32_t* bitmap, uint32_t childIdx) {
+    // Update node bitmap
+    for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
+        nodeBitmap_[idx] += (bitmap[idx] - bitmap_[childIdx][idx]);
+    }
+
+    // Update child bitmap 
+    for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
+        bitmap_[childIdx][idx] = bitmap[idx];
+    }
+}
+
+// Copy the bitmap contents of a node
+void TreeNode::copyNodeBitmap(TreeNode* node) {
+    // Update node bitmap
+    for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
+        nodeBitmap_[idx] = node -> nodeBitmap_[idx];
+    }
+
+    // Update child bitmap 
     for (uint32_t entryIdx = 0; entryIdx < node -> currEntries_; entryIdx++) {
-        for (uint32_t idx = 0; idx < dataSize_; idx++) {
-            data_[entryIdx][idx] = node -> data_[entryIdx][idx];
+        for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
+            bitmap_[entryIdx][idx] = node -> bitmap_[entryIdx][idx];
+        }
+    }
+
+}
+
+// Copy the events data of a node
+void TreeNode::copyNodeEvents(TreeNode* node) {
+    
+    for (uint32_t childIdx = 0; childIdx < node -> currEntries_; childIdx++) {
+        // Clear everything
+        childEvents_[childIdx].clear();
+        for (uint32_t idx = 0; idx < TIMESLOTS; idx++) {
+            childTimeSlots_[childIdx][idx].clear();
+        }
+
+        // Copy list
+        childEvents_[childIdx] = node -> childEvents_[childIdx];
+
+        // Hash into time slots
+        // Loop over all events
+        for (list<Event>::iterator it = childEvents_[childIdx].begin(); it != childEvents_[childIdx].end(); it++) {
+            // Loop over all time slots
+            for (uint32_t slotIdx = 0; slotIdx < TIMESLOTS; slotIdx++) {
+                
+                uint16_t slotDuration = (60 * 24) / TIMESLOTS;
+                uint16_t startTime = slotDuration * slotIdx;
+                uint16_t endTime = startTime + slotDuration - 1;
+                
+                // Add to time slot if required
+                if (it -> existsAtTimeInterval(startTime, endTime)) {
+                    childTimeSlots_[childIdx][slotIdx].push_back(it);
+                }
+            }
         }
     }
 }
@@ -286,14 +413,36 @@ void TreeNode::copyNodeData(TreeNode* node) {
 // Print the tree
 void TreeNode::printTree(RTree* rTree) {
     cout << "Node ID : " << nodeID_ << endl;
+    cout << "Node MBR :- ";
+    currentMBR_.print();
+    cout << endl;
+    cout << "Node Bitmap :- ";
+    cout << "[";
+    for (int idx = 0; idx < bitmapSize_; idx++) {
+        cout << nodeBitmap_[idx];
+        if (idx != bitmapSize_ - 1) {
+            cout << ", ";
+        }
+    }
+    cout << "]" << endl;
     cout << "Current Entries : " << currEntries_ << endl;
     cout << "Child Pointers : ";
     for (int idx = 0; idx < currEntries_; idx++) {
         cout << childPointers_[idx];
-        if (idx < currEntries_ - 1) {
-            cout << ", ";
+        cout << ", MBR :- ";
+        MBR_[idx].print();
+        cout << "; Bitmap :- ";
+        cout << "[";
+        for (int bitmapIdx = 0; bitmapIdx < bitmapSize_; bitmapIdx++) {
+            cout << bitmap_[idx][bitmapIdx];
+            if (bitmapIdx != bitmapSize_ - 1) {
+                cout << ", ";
+            }
         }
+        cout << "]" << endl;
+        cout << "EVENTS : " << childEvents_[idx].size() << endl; 
     }
+
     cout << endl;
     for (int idx = 0; idx < currEntries_; idx++) {
         cout << "~~~~~~~~~~~~~~~~~~~~~~~" << endl;
@@ -304,14 +453,22 @@ void TreeNode::printTree(RTree* rTree) {
     cout << endl;
 }
 
-// Free the data
-void TreeNode::freeData() {
+// Free the bitmap
+void TreeNode::freeBitmap() {
     
-    delete nodeData_;
-    
-    for (uint32_t idx = 0; idx < maxEntries_ + 1; idx++) {
-        delete data_[idx];
-    }
+    delete [] nodeBitmap_;
 
-    delete data_;
+    delete [] bitmap_;
+}
+
+// Free events data
+void TreeNode::freeEvents() {
+    for (uint32_t idx = 0; idx < maxEntries_ + 1; idx++) {
+        childEvents_[idx].clear();
+        for (uint32_t slotIdx = 0; slotIdx < TIMESLOTS; slotIdx++) {
+            childTimeSlots_[idx][slotIdx].clear();
+        }
+    }
+    delete [] childEvents_;
+    delete [] childTimeSlots_;
 }

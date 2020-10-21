@@ -20,7 +20,8 @@ class Rectangle {
         static long double distance(const Rectangle& rect1, const Rectangle& rect2);
         long double getArea();
         long double getAreaEnlargement(const Rectangle& rect);
-        
+        bool containsPoint(long double x, long double y);
+        void print();
 };
 
 #endif
