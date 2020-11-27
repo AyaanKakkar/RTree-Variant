@@ -15,14 +15,14 @@ class LeafNode : public TreeNode {
 
         // Override functions
         virtual TreeNode* createSplitNode();
-        void addLeafEntry(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events, uint32_t eventsCount, uint32_t doc);
+        void addLeafEntry(Rectangle MBR, int32_t* bitmap, int32_t pointer, Event* events, int32_t eventsCount, int32_t doc);
     
     public:
         // Constructor
-        LeafNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize);
+        LeafNode(int32_t maxEntries, int32_t minEntries, int32_t bitmapSize);
 
         // Override functions
-        virtual uint32_t insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, uint32_t doc, Event* events, uint32_t eventsCount, RTree* rTree);
+        virtual int32_t insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_t doc, Event* events, int32_t eventsCount, RTree* rTree);
         virtual void printTree(RTree* rTree);
 
     friend class RTree;

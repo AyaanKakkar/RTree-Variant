@@ -19,51 +19,51 @@ class TreeNode {
     protected: 
 
         // Basic Node Data
-        uint32_t nodeID_; // ID of the node (Used to access it on disk)
-        uint32_t maxEntries_; // Max Number of entries in the node
-        uint32_t minEntries_; // Min number of entries in the node
-        uint32_t currEntries_; // Number of current entries
-        uint32_t bitmapSize_; // Size of bitmap array;
+        int32_t nodeID_; // ID of the node (Used to access it on disk)
+        int32_t maxEntries_; // Max Number of entries in the node
+        int32_t minEntries_; // Min number of entries in the node
+        int32_t currEntries_; // Number of current entries
+        int32_t bitmapSize_; // Size of bitmap array;
         
         // Child Pointers
-        uint32_t* childPointers_; // Child Pointers (Stores the ID of each child)
+        int32_t* childPointers_; // Child Pointers (Stores the ID of each child)
         
         // MBRs
         Rectangle currentMBR_; // MBR of the current node
         Rectangle* MBR_; // MBR of each child
         
         // Bitmaps
-        uint32_t** bitmap_; // Bitmap corresponding to each child
-        uint32_t* nodeBitmap_; // Bitmap corresponding to the entire node
+        int32_t** bitmap_; // Bitmap corresponding to each child
+        int32_t* nodeBitmap_; // Bitmap corresponding to the entire node
 
         // Event Data
         list<Event>* childEvents_; // Child Events Linked List
         list<list<Event>::iterator> ** childTimeSlots_; // Time Slots Hash Buckets for each child
 
         // Document Data
-        uint32_t doc_; // Document of the node
-        uint32_t* docs_; // Document of each child
+        int32_t doc_; // Document of the node
+        int32_t* docs_; // Document of each child
 
 
         // Add Entry to the node
-        void addEntry(Rectangle MBR, uint32_t* bitmap, list<Event>* events, uint32_t eventsListCount, uint32_t doc, uint32_t pointer);
+        void addEntry(Rectangle MBR, int32_t* bitmap, list<Event>* events, int32_t eventsListCount, int32_t doc, int32_t pointer);
         
         // Entry addition helper functions
-        void addBitmap(uint32_t* bitmap);
-        void addBitmapToChild(uint32_t* bitmap, uint32_t childIdx);
-        void addEventsToChild(Event* events, uint32_t eventsCount, uint32_t childIdx);
+        void addBitmap(int32_t* bitmap);
+        void addBitmapToChild(int32_t* bitmap, int32_t childIdx);
+        void addEventsToChild(Event* events, int32_t eventsCount, int32_t childIdx);
 
 
         // Doc creation
         void createDoc();
         
         // Split node
-        uint32_t split(RTree *rTree);
+        int32_t split(RTree *rTree);
 
         // Split helper functions
-        TreeNode* chooseSplitNode(uint32_t entryIdx, TreeNode* splitNode1, TreeNode* splitNode2, uint32_t remainingEntries);
+        TreeNode* chooseSplitNode(int32_t entryIdx, TreeNode* splitNode1, TreeNode* splitNode2, int32_t remainingEntries);
         virtual TreeNode* createSplitNode();
-        void addEntryToSplitNode(uint32_t entryIdx, TreeNode* splitNode);
+        void addEntryToSplitNode(int32_t entryIdx, TreeNode* splitNode);
         
         // Copy node
         void copyNodeContent(TreeNode* node);
@@ -71,8 +71,8 @@ class TreeNode {
         void copyNodeEvents(TreeNode* node);
 
         // Child update functions
-        void updateChildBitmap(uint32_t* bitmap, uint32_t childIdx);
-        void updateChildEvents(list<Event>* events, uint32_t eventsListCount, uint32_t childIdx);
+        void updateChildBitmap(int32_t* bitmap, int32_t childIdx);
+        void updateChildEvents(list<Event>* events, int32_t eventsListCount, int32_t childIdx);
 
         // Destory functions
         void freeBitmap();
@@ -81,11 +81,11 @@ class TreeNode {
     public:
 
         // Constructor and desctructor
-        TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize);
+        TreeNode(int32_t maxEntries, int32_t minEntries, int32_t bitmapSize);
         virtual ~TreeNode();
         
         // Insertion function
-        virtual uint32_t insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, uint32_t doc, Event* events, uint32_t eventsCount, RTree* rTree);
+        virtual int32_t insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_t doc, Event* events, int32_t eventsCount, RTree* rTree);
         
         // Print function
         virtual void printTree(RTree* rTree);

@@ -18,7 +18,7 @@ class Event {
         
         uint16_t endTime_;   // Ending time in minutes from 12 A.M.
 
-        uint32_t bitmapSize_; // Size of bitmap
+        int32_t bitmapSize_; // Size of bitmap
 
         uint8_t* bitmap_; // Bitmap for type of event
 
@@ -26,12 +26,12 @@ class Event {
 
         long double y_; // Y coordinate of event
 
-        uint32_t eventID_; // ID of event
+        int32_t eventID_; // ID of event
     
     
     public:
         Event(){};
-        Event(uint16_t startTime, uint16_t endTime, uint32_t bitmapSize, uint8_t* bitmap, long double x, long double y, uint32_t id);
+        Event(uint16_t startTime, uint16_t endTime, int32_t bitmapSize, uint8_t* bitmap, long double x, long double y, int32_t id);
         bool locatedInside(Rectangle rect);
         bool existsAtTimeInterval(uint16_t startTime, uint16_t endTime);
 };

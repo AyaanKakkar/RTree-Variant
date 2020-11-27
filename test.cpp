@@ -5,6 +5,10 @@
 using namespace std;
 
 int N = 10000;
+int pageSize = 1000;
+int maxEntries = 4;
+int minEntries = 2;
+int bitmapSize = 2;
 
 int main(int argc, char* argv[]) {
 
@@ -12,7 +16,7 @@ int main(int argc, char* argv[]) {
         N = atoi(argv[1]);
     } 
     
-    RTree* rtree = RTree::createIndex("testFile.bin", 1000, 4, 2, 2);
+    RTree* rtree = RTree::CreateIndex("testFile.bin", pageSize, maxEntries, minEntries, bitmapSize);
     
     for (int i = 0; i < N; i++) {
         int minX = rand() % 10;
@@ -22,22 +26,23 @@ int main(int argc, char* argv[]) {
         
         Rectangle temp(minX, maxX, minY, maxY);
         
-        uint32_t *dataTemp = new uint32_t[2];
+        int32_t *dataTemp = new int32_t[bitmapSize];
         
-        dataTemp[0] = 1;
-        dataTemp[1] = 2;
+        for (int j = 0; j < bitmapSize; j++) {
+            dataTemp[j] = j+1;
+        }
         
         rtree->insert(temp, dataTemp, i, i);
         
         if (N < 50) {
             rtree->printTree();
-            cout << "Nodes Accessed : " << rtree->nodesAccessed_ << endl;
+            cout << "Disk IO : " << rtree->diskIO_ << endl;
         }
 
         delete dataTemp;
     }
 
-    cout << "Overall Nodes Accessed : " << rtree->nodesAccessed_ << endl;
+    cout << "Overall Disk IO : " << rtree->diskIO_ << endl;
 
     return 0;
 }

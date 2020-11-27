@@ -20,13 +20,14 @@ class RTree {
         RTree(){} // Private constructor to restrict access
 
         // Metadata
-        uint32_t rootPageOffset_; // Number of initial pages reserved for tree metadata
-        uint32_t treeSize_; // Number of nodes in the tree
-        uint32_t rootID_; // ID of the root node
-        uint32_t pageSize_; // Page Size
-        uint32_t maxEntries_; // Max Entries in the node
-        uint32_t minEntries_; // Min Entries in the node
-        uint32_t bitmapSize_; // Size of the bitmap
+        int32_t rootPageOffset_; // Number of initial pages reserved for tree metadata
+        int32_t treeSize_; // Number of nodes in the tree
+        int32_t rootID_; // ID of the root node
+        int32_t pageSize_; // Page Size
+        int32_t maxEntries_; // Max Entries in the node
+        int32_t minEntries_; // Min Entries in the node
+        int32_t bitmapSize_; // Size of the bitmap
+        int32_t nextPage_; // Next available page
 
         // Root node
         TreeNode* rootNode_; // Pointer to the root node
@@ -35,12 +36,14 @@ class RTree {
         fstream filePointer_;
         
         // Get node from disk
-        TreeNode* getNode(uint32_t id); 
-        TreeNode* readNode(uint32_t page);
+        TreeNode* getNode(int32_t id); 
+        TreeNode* readNode(int32_t page);
         
         // Save node to disk
         void saveNode(TreeNode* node);  // INCREASES TREE SIZE
-        void writeNode(TreeNode* node, uint32_t page);
+        void writeNode(TreeNode* node);
+        int32_t getNodeData(TreeNode* node, char* &a); // Helper function
+        int32_t readNodeData(int32_t page, char* &a); // Helper function
         
         // Save tree
         void saveTree();
@@ -48,10 +51,10 @@ class RTree {
     public:
         // Create and retrieve index
         static RTree* LoadIndex(string fileName);
-        static RTree* createIndex(string fileName, uint32_t pageSize, uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize);
+        static RTree* CreateIndex(string fileName, int32_t pageSize, int32_t maxEntries, int32_t minEntries, int32_t bitmapSize);
         
         // Insertion function
-        void insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, uint32_t doc, Event* events = nullptr, uint32_t eventsCount = 0);
+        void insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_t doc, Event* events = nullptr, int32_t eventsCount = 0);
 
         // Print tree for debugging
         void printTree();
@@ -60,10 +63,10 @@ class RTree {
         ~RTree();
 
         // Maintain count of nodes accessed
-        uint32_t nodesAccessed_;
+        int32_t nodesAccessed_;
 
         // Maintain a count of disk IOs
-        uint32_t diskIO_;
+        int32_t diskIO_;
 
     friend class TreeNode;
     friend class LeafNode;
