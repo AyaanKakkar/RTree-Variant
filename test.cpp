@@ -27,16 +27,17 @@ int main(int argc, char* argv[]) {
         dataTemp[0] = 1;
         dataTemp[1] = 2;
         
-        rtree->insert(temp, dataTemp, i);
+        rtree->insert(temp, dataTemp, i, i);
         
         if (N < 50) {
             rtree->printTree();
+            cout << "Nodes Accessed : " << rtree->nodesAccessed_ << endl;
         }
-        
-        cout << "Nodes Accessed : " << rtree->nodesAccessed_ << endl;
 
         delete dataTemp;
     }
+
+    cout << "Overall Nodes Accessed : " << rtree->nodesAccessed_ << endl;
 
     return 0;
 }

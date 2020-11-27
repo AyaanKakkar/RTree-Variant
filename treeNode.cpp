@@ -7,19 +7,23 @@ using namespace std;
 // Constructor
 TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize) {
     
-    nodeID_ = -1;
+    // Initialize values
+    nodeID_ = -1; // This would be the page where the node is stored
     maxEntries_ = maxEntries;
     minEntries_ = minEntries;
     bitmapSize_ = bitmapSize;
 
     currEntries_ = 0;
     
+    // Initialzie MBRs
     currentMBR_ = Rectangle();
-    
+
     MBR_ = new Rectangle[maxEntries_ + 1];
-    
+
+    // Initialize pointers    
     childPointers_ = new uint32_t[maxEntries_ + 1];
 
+    // Initialize bitmaps
     nodeBitmap_ = new uint32_t[bitmapSize_]; 
     for (uint32_t idx = 0; idx < bitmapSize_; idx++) {
         nodeBitmap_[idx] = 0;
@@ -33,6 +37,7 @@ TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize
         }
     }
 
+    // Initialize events data
     childEvents_ = new list<Event>[maxEntries_ + 1];
     
     childTimeSlots_ = new list<list<Event>::iterator> *[maxEntries_ + 1];
@@ -40,12 +45,15 @@ TreeNode::TreeNode(uint32_t maxEntries, uint32_t minEntries, uint32_t bitmapSize
         childTimeSlots_[idx] = new list<list<Event>::iterator>[TIMESLOTS];
     }
 
+    // Initialize document data
+    doc_ = -1;
+    docs_ = new uint32_t[maxEntries_ + 1];
 }
 
 
 // Insert an entry into the subtree
 // Returns -1 if entry successful, otherwise returns the ID of the new node that must be inserted into the parent
-uint32_t TreeNode::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events, uint32_t eventsCount, RTree* rTree) {
+uint32_t TreeNode::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, uint32_t doc, Event* events, uint32_t eventsCount, RTree* rTree) {
     
     // Update the MBR
     currentMBR_ = Rectangle::combine(currentMBR_, MBR);
@@ -81,7 +89,7 @@ uint32_t TreeNode::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Eve
     TreeNode* childNode = rTree -> getNode(childPointers_[childIdx]);
 
     // Insert into that node
-    uint32_t newNodeID = childNode -> insert(MBR, bitmap, pointer, events, eventsCount,rTree);
+    uint32_t newNodeID = childNode -> insert(MBR, bitmap, pointer, doc, events, eventsCount,rTree);
 
     // Update that node's MBR
     MBR_[childIdx] = childNode -> currentMBR_;
@@ -97,23 +105,22 @@ uint32_t TreeNode::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Eve
         TreeNode* newNode = rTree -> getNode(newNodeID);
 
         // Add that node info
-        addEntry(newNode -> currentMBR_, newNode -> nodeBitmap_, newNode -> childEvents_, newNode -> currEntries_, newNodeID);   
+        addEntry(newNode -> currentMBR_, newNode -> nodeBitmap_, newNode -> childEvents_, newNode -> currEntries_, newNode -> doc_, newNodeID);   
         
         // Free the memory
         delete newNode;
-        
-        // Perform splitting if necessary and return the new noe formed
-        if (currEntries_ > maxEntries_) {
-            
-            // Free memory
-            delete childNode;
-
-            return split(rTree);
-        }
     }
 
-    // Free the memory
+    // Free memory
     delete childNode;
+
+    // Perform splitting if necessary and return the new node formed
+    if (currEntries_ > maxEntries_) {
+        return split(rTree);
+    }
+
+    // Create doc
+    createDoc();
 
     // Save changes to the disk
     rTree -> saveNode(this);
@@ -122,8 +129,9 @@ uint32_t TreeNode::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Eve
 }
 
 // Add an entry in the node
-void TreeNode::addEntry(Rectangle MBR, uint32_t* bitmap, list<Event>* events, uint32_t eventsListCount, uint32_t pointer) {
+void TreeNode::addEntry(Rectangle MBR, uint32_t* bitmap, list<Event>* events, uint32_t eventsListCount, uint32_t doc, uint32_t pointer) {
 
+    // Update MBRs
     MBR_[currEntries_] = MBR;
     
     if (currEntries_ == 0) {
@@ -133,6 +141,10 @@ void TreeNode::addEntry(Rectangle MBR, uint32_t* bitmap, list<Event>* events, ui
         currentMBR_ = Rectangle::combine(currentMBR_, MBR_[currEntries_]);
     }
 
+    // Add doc data
+    docs_[currEntries_] = doc;
+
+    // Update bitmaps and events
     updateChildBitmap(bitmap, currEntries_);
     updateChildEvents(events, eventsListCount, currEntries_);
 
@@ -181,6 +193,10 @@ uint32_t TreeNode::split(RTree* rTree) {
 
     // Transfer the contents of one node to the current node
     copyNodeContent(splitNode1);
+
+    // Create all docs
+    createDoc();
+    splitNode2 -> createDoc();
 
     // Save the changes to the disk
     rTree -> saveNode(splitNode2);  
@@ -249,17 +265,28 @@ TreeNode* TreeNode::createSplitNode() {
 
 // Add entry to a split node
 void TreeNode::addEntryToSplitNode(uint32_t entryIdx, TreeNode* splitNode) {
-    splitNode->addEntry(MBR_[entryIdx], bitmap_[entryIdx], &childEvents_[entryIdx], 1, childPointers_[entryIdx]);
+    splitNode->addEntry(MBR_[entryIdx], bitmap_[entryIdx], &childEvents_[entryIdx], 1, docs_[entryIdx], childPointers_[entryIdx]);
 }
 
 // Copy content from a node
 void TreeNode::copyNodeContent(TreeNode* node) {
     currEntries_ = node -> currEntries_;
+
+    // Copy MBR
     currentMBR_ = node -> currentMBR_;
+
     for (uint32_t idx = 0; idx < currEntries_; idx++) {
         MBR_[idx] = node -> MBR_[idx];
         childPointers_[idx] = node -> childPointers_[idx];
     }
+
+    // Copy document data
+    doc_ = node -> doc_;
+
+    for (uint32_t idx = 0; idx < currEntries_; idx++) {
+        docs_[idx] = node -> docs_[idx];
+    }
+
     copyNodeBitmap(node);
     copyNodeEvents(node);
 }
@@ -425,12 +452,14 @@ void TreeNode::printTree(RTree* rTree) {
         }
     }
     cout << "]" << endl;
+    cout << "Doc ID : " << doc_ << endl;
     cout << "Current Entries : " << currEntries_ << endl;
     cout << "Child Pointers : ";
     for (int idx = 0; idx < currEntries_; idx++) {
         cout << childPointers_[idx];
         cout << ", MBR :- ";
         MBR_[idx].print();
+        cout << "; Doc ID : " << docs_[idx];
         cout << "; Bitmap :- ";
         cout << "[";
         for (int bitmapIdx = 0; bitmapIdx < bitmapSize_; bitmapIdx++) {
@@ -471,4 +500,11 @@ void TreeNode::freeEvents() {
     }
     delete [] childEvents_;
     delete [] childTimeSlots_;
+}
+
+// Create or update document
+void TreeNode::createDoc() {
+    // Implementation left
+    // Do an aggregation of documents
+    doc_ = 1;
 }

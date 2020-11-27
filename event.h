@@ -16,7 +16,7 @@ class Event {
         
         uint16_t startTime_; // Starting time in minutes from 12 A.M.
         
-        uint16_t endTime_;   // Ending time in minutes form 12 A.M.
+        uint16_t endTime_;   // Ending time in minutes from 12 A.M.
 
         uint32_t bitmapSize_; // Size of bitmap
 

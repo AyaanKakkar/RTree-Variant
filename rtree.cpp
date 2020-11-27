@@ -19,6 +19,7 @@ RTree* RTree::createIndex(string fileName, uint32_t pageSize, uint32_t maxEntrie
     rTree -> rootID_ = -1;
     rTree -> rootNode_ = nullptr;
     rTree -> nodesAccessed_ = 0;
+    rTree -> diskIO_ = 0;
     
     // Open the file
     rTree -> filePointer_.open(fileName, ios::binary | ios::in | ios::out | ios::trunc);
@@ -30,14 +31,14 @@ RTree* RTree::createIndex(string fileName, uint32_t pageSize, uint32_t maxEntrie
 }
 
 // Insert an entry into the RTree
-void RTree::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* events, uint32_t eventsCount) {
+void RTree::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, uint32_t doc, Event* events, uint32_t eventsCount) {
     if (treeSize_ == 0) {
         // If it's an empty tree then create a root node
         rootNode_ = new LeafNode(maxEntries_, minEntries_, bitmapSize_);
     }
     
     // Insert into the root
-    uint32_t newNodeID = this -> rootNode_ -> insert(MBR, bitmap, pointer, events, eventsCount, this);
+    uint32_t newNodeID = this -> rootNode_ -> insert(MBR, bitmap, pointer, doc, events, eventsCount, this);
 
     if (newNodeID != -1) {
         // Get the new node
@@ -47,10 +48,13 @@ void RTree::insert(Rectangle MBR, uint32_t* bitmap, uint32_t pointer, Event* eve
         TreeNode* newRoot = new TreeNode(maxEntries_, minEntries_, bitmapSize_);
 
         // Add the new node
-        newRoot -> addEntry(newNode -> currentMBR_, newNode -> nodeBitmap_, newNode -> childEvents_, newNode -> currEntries_, newNodeID); 
+        newRoot -> addEntry(newNode -> currentMBR_, newNode -> nodeBitmap_, newNode -> childEvents_, newNode -> currEntries_, newNode -> doc_, newNodeID); 
 
         // Add the current root
-        newRoot -> addEntry(rootNode_ -> currentMBR_, rootNode_ -> nodeBitmap_, rootNode_ -> childEvents_, rootNode_ -> currEntries_, rootNode_ -> nodeID_);
+        newRoot -> addEntry(rootNode_ -> currentMBR_, rootNode_ -> nodeBitmap_, rootNode_ -> childEvents_, rootNode_ -> currEntries_, rootNode_ -> doc_, rootNode_ -> nodeID_);
+
+        // Create document
+        newRoot -> createDoc();
 
         // Free the memory
         delete rootNode_;
@@ -77,6 +81,7 @@ void RTree::saveNode(TreeNode* node) {
         this -> saveTree();
     }
     writeNode(node, node -> nodeID_ + rootPageOffset_);
+    diskIO_++;
 }
 
 // Retrieve a node using ID
@@ -84,6 +89,7 @@ TreeNode* RTree::getNode(uint32_t id) {
     TreeNode* node = this -> readNode(id + rootPageOffset_);
     node -> nodeID_ = id;
     nodesAccessed_++;
+    diskIO_++;
     return node;
 }
 
@@ -105,6 +111,12 @@ void RTree::writeNode(TreeNode* node, uint32_t page) {
     filePointer_.write((char *) &(node -> currentMBR_), sizeof(node -> currentMBR_));
     for (uint32_t idx = 0; idx < node -> currEntries_; idx++) {
         filePointer_.write((char *) &(node -> MBR_[idx]), sizeof(node -> MBR_[idx]));
+    }
+
+    // Save the docs
+    filePointer_.write((char *) &(node -> doc_), sizeof(node -> doc_));
+    for (uint32_t idx = 0; idx < node -> currEntries_; idx++) {
+        filePointer_.write((char *) &(node -> docs_[idx]), sizeof(node -> docs_[idx]));
     }
 
     // Save the child Pointers
@@ -166,6 +178,12 @@ TreeNode* RTree::readNode(uint32_t page) {
     for (uint32_t idx = 0; idx < node -> currEntries_; idx++) {
         filePointer_.read((char *) &(node -> MBR_[idx]), sizeof(node -> MBR_[idx]));
     }
+
+    // Retrieve Docs
+    filePointer_.read((char *) &(node -> doc_), sizeof(node -> doc_));
+    for (uint32_t idx = 0; idx < node -> currEntries_; idx++) {
+        filePointer_.read((char *) &(node -> docs_[idx]), sizeof(node -> docs_[idx]));
+    }   
 
     // Retrieve pointers
     for (uint32_t idx = 0; idx < node -> currEntries_; idx++) {
