@@ -44,8 +44,12 @@ void RTree::insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_t doc,
         rootNode_ = new LeafNode(maxEntries_, minEntries_, bitmapSize_);
     }
     
+    // cout << "RTree Insert Before" << endl;
+
     // Insert into the root
     int32_t newNodeID = this -> rootNode_ -> insert(MBR, bitmap, pointer, doc, events, eventsCount, this);
+
+    // cout << "RTree Insert After, New Node ID: " << newNodeID << endl;
 
     if (newNodeID != -1) {
         // Get the new node
@@ -183,6 +187,8 @@ int32_t RTree::getNodeData(TreeNode* node, char* &a) {
         }
     }
 
+    // cout << "Saving Node " << node -> nodeID_ << ". Saving Events" << endl;
+    // cout << "Curr Entries In Node : " << node -> currEntries_ << endl;
     // Save the events
     for (int32_t idx = 0; idx < node -> currEntries_; idx++) {
         // Save list size 
@@ -190,10 +196,16 @@ int32_t RTree::getNodeData(TreeNode* node, char* &a) {
         memcpy(curr, (char *) &(listSize), sizeof(listSize));
         curr += sizeof(listSize);
 
+        // cout << "Entry " << idx << endl;
+
+        // cout << "Event List Size : " << listSize << endl;
+
         // Save list
         for (list<Event>::iterator it = node -> childEvents_[idx].begin(); it != node -> childEvents_[idx].end(); it++) {
-            memcpy(curr, (char *) &(*it), sizeof(*it));
-            curr += sizeof(*it);
+            Event x = *it;
+            // cout << "Event : " << x.startTime_ << "," << x.endTime_ << endl;
+            memcpy(curr, (char *) &(x), sizeof(x));
+            curr += sizeof(x);
         }
     }
 
@@ -205,12 +217,14 @@ int32_t RTree::getNodeData(TreeNode* node, char* &a) {
 // The initial bytes will be reserved to save the next page for the node
 // Initial metadata would also contain the number of useful bytes to read in this page 
 void RTree::writeNode(TreeNode* node) {
-    
+
     int32_t pageAvailable = pageSize_ - 2 * sizeof(int32_t);
 
     char *a; // Node data to be written
     
     int32_t size = getNodeData(node, a);
+
+
 
     deque <int32_t> pages;
 
@@ -379,19 +393,28 @@ TreeNode* RTree::readNode(int32_t page) {
         }
     }
 
+    // cout << "Getting Node " << page << ". Retrieving events"<< endl;
+    // cout << "Curr Entries In Node: " << node -> currEntries_ << endl;
     // Retrieve events
     for (int32_t idx = 0; idx < node -> currEntries_; idx++) {
         
+        
         // Read List size
-        int32_t size;
+        size_t size;
         memcpy((char *) &(size), curr, sizeof(size));
         curr += sizeof(size);
+
+        // cout << "Entry : " << idx << endl;
+        // cout << "Event List Size : " << size << endl;
 
         // Read List
         Event value;
         for (int32_t i = 0; i < size; i++) {
             memcpy((char *) &(value), curr, sizeof(value));
             curr += sizeof(value);
+
+            // cout << "Event : " << value.startTime_ << "," << value.endTime_ << endl;
+
             node -> childEvents_[idx].push_back(value);
 
             // Get iterator to that event

@@ -55,6 +55,8 @@ TreeNode::TreeNode(int32_t maxEntries, int32_t minEntries, int32_t bitmapSize) {
 // Returns -1 if entry successful, otherwise returns the ID of the new node that must be inserted into the parent
 int32_t TreeNode::insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_t doc, Event* events, int32_t eventsCount, RTree* rTree) {
     
+    // cout << "Tree Node Reached" << endl;
+
     // Update the MBR
     currentMBR_ = Rectangle::combine(currentMBR_, MBR);
 
@@ -79,15 +81,21 @@ int32_t TreeNode::insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_
         }
     } 
 
+
+    // cout << "Adding Events to Child" << endl;
     // Add new events to child data
     addEventsToChild(events, eventsCount, childIdx);
+
+    // cout << "Events Added" << endl;
 
     // Add bitmap to child
     addBitmapToChild(bitmap, childIdx);
 
+    // cout << "Getting Child" << endl;
     // Get that child node
     TreeNode* childNode = rTree -> getNode(childPointers_[childIdx]);
 
+    // cout << "Got Child" << endl;
     // Insert into that node
     int32_t newNodeID = childNode -> insert(MBR, bitmap, pointer, doc, events, eventsCount,rTree);
 
@@ -497,6 +505,7 @@ void TreeNode::freeEvents() {
         for (int32_t slotIdx = 0; slotIdx < TIMESLOTS; slotIdx++) {
             childTimeSlots_[idx][slotIdx].clear();
         }
+        delete[] childTimeSlots_[idx];
     }
     delete [] childEvents_;
     delete [] childTimeSlots_;
@@ -529,3 +538,5 @@ void TreeNode::query(Rectangle MBR, vector<int32_t>& a, RTree* rTree) {
         }
     }
 }
+
+

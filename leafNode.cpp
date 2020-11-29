@@ -13,19 +13,29 @@ LeafNode::LeafNode(int32_t maxEntries, int32_t minEntries, int32_t bitmapSize) :
 // Returns -1 if entry successful, otherwise returns the ID of the new node that must be inserted into the parent
 int32_t LeafNode::insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_t doc, Event* events, int32_t eventsCount, RTree* rTree) {
 
+    // cout << "Leaf Node Reached" << endl;
+
     addLeafEntry(MBR, bitmap, pointer, events, eventsCount, doc);
+    
+    // cout << "Leaf Node Entries Added" << endl;
+
 
     // Perform splitting if necessary
     if (currEntries_ > maxEntries_) {
+        // cout << "Leaf Node Splitting" << endl;
         return split(rTree);
     }
 
+    // cout << "Leaf Node Creating Doc" << endl;
     // Create doc
     createDoc(rTree);
 
+
+    // cout << "Leaf Node Saving" << endl;
     // Save changes to the disk
     rTree -> saveNode(this);
 
+    // cout << "Leaf Node Insert Ending" << endl;
     return -1;
 }
 

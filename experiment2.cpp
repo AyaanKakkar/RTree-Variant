@@ -12,7 +12,7 @@ using namespace std;
 const string indexFileName = "exp2.bin";
 
 const int32_t pageSize = 4096;
-const int32_t maxEntries = 100;
+const int32_t maxEntries = 64;
 const int32_t minEntries = 2;
 const int32_t bitmapSize = 2;
 const int n_pois = 5000;
@@ -71,7 +71,7 @@ void buildRTree() {
     rtree = RTree::CreateIndex(indexFileName, pageSize, maxEntries, minEntries, bitmapSize);
 
     for (int32_t i = 0; i < poi_count; i++) {
-        rtree -> insert(MBRs[i], bitmaps[i], poiID[i], docID[i]);
+        rtree -> insert(MBRs[i], bitmaps[i], poiID[i], docID[i], events[i], eventCounts[i]);
     }
 
 }
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
         timeTaken[i] *= 1e-6; // Cast to milliseconds
 
         cout << "DISK IOs : " << diskIO[i] << endl;
-        cout << "Execution Time : " << fixed << timeTaken[i] << setprecision(9) << "ms" << endl;
+        cout << "Execution Time : " << fixed << timeTaken[i] << setprecision(12) << "ms" << endl;
 
         cout << endl;
     }

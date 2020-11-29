@@ -40,7 +40,7 @@ class TreeNode {
         // Event Data
         list<Event>* childEvents_; // Child Events Linked List
         list<list<Event>::iterator> ** childTimeSlots_; // Time Slots Hash Buckets for each child
-
+        
         // Document Data
         int32_t doc_; // Document of the node
         int32_t* docs_; // Document of each child
