@@ -120,7 +120,7 @@ int32_t TreeNode::insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_
     }
 
     // Create doc
-    createDoc();
+    createDoc(rTree);
 
     // Save changes to the disk
     rTree -> saveNode(this);
@@ -195,8 +195,8 @@ int32_t TreeNode::split(RTree* rTree) {
     copyNodeContent(splitNode1);
 
     // Create all docs
-    createDoc();
-    splitNode2 -> createDoc();
+    createDoc(rTree);
+    splitNode2 -> createDoc(rTree);
 
     // Save the changes to the disk
     rTree -> saveNode(splitNode2);  
@@ -503,8 +503,29 @@ void TreeNode::freeEvents() {
 }
 
 // Create or update document
-void TreeNode::createDoc() {
+void TreeNode::createDoc(RTree* rTree) {
     // Implementation left
     // Do an aggregation of documents
-    doc_ = 1;
+    if (doc_ == -1) {
+        doc_ = rTree -> nextDoc_;
+        rTree -> nextDoc_--;
+    }
+}
+
+
+
+// Query
+void TreeNode::query(Rectangle MBR, vector<int32_t>& a, RTree* rTree) {
+    
+    Rectangle b = Rectangle::intersection(currentMBR_, MBR);
+
+    if (b.isValid()) {
+        for (int i = 0; i < currEntries_; i++) {
+            Rectangle x = Rectangle::intersection(MBR_[i], MBR);
+            if (x.isValid()) {
+                TreeNode* node = rTree -> getNode(childPointers_[i]);
+                node -> query(MBR, a, rTree);
+            }
+        }
+    }
 }

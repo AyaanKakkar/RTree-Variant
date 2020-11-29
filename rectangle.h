@@ -22,6 +22,9 @@ class Rectangle {
         long double getAreaEnlargement(const Rectangle& rect);
         bool containsPoint(long double x, long double y);
         void print();
+        bool isValid();
+        long double getCenterX();
+        long double getCenterY();
 };
 
 #endif

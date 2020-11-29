@@ -1,13 +1,11 @@
 #include "event.h"
 
 // Constructor
-Event::Event(uint16_t startTime, uint16_t endTime, int32_t bitmapSize, uint8_t* bitmap, long double x, long double y, int32_t id) {
+Event::Event(uint16_t startTime, uint16_t endTime, int32_t bitmapSize, uint8_t* bitmap, int32_t id) {
     
     // Initialize values
     startTime_ = startTime;
     endTime_ = endTime;
-    x_ = x;
-    y_ = y;
     eventID_ = id;
     bitmapSize_ = bitmapSize;
     
@@ -19,10 +17,6 @@ Event::Event(uint16_t startTime, uint16_t endTime, int32_t bitmapSize, uint8_t* 
 
 }
 
-// Check if the event is located in a particular region
-bool Event::locatedInside(Rectangle rect) {
-    return rect.containsPoint(x_, y_);
-}
 
 
 // Checks if the event is occurring at teh given time interval

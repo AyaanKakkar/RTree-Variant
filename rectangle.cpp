@@ -79,3 +79,15 @@ void Rectangle::print() {
     cout << "(X : " << minX_ << " - " << maxX_ << "; ";
     cout << "Y : " << minY_ << " - " << maxY_ << ")";
 }
+
+bool Rectangle::isValid() {
+    return minX_ <= maxX_ && minY_ <= maxY_;
+}
+
+long double Rectangle::getCenterX() {
+    return (minX_ + maxX_) / 2;
+}
+
+long double Rectangle::getCenterY() {
+    return (minY_ + maxY_) / 2;
+}

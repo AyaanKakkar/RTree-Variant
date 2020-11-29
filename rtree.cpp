@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <deque>
+#include <vector>
 #include "rtree.h"
 
 #define MIN(a, b) (a) < (b) ? a : b
@@ -25,7 +26,8 @@ RTree* RTree::CreateIndex(string fileName, int32_t pageSize, int32_t maxEntries,
     rTree -> nodesAccessed_ = 0;
     rTree -> diskIO_ = 0;
     rTree -> nextPage_ = 1;
-    
+    rTree -> nextDoc_ = -2;
+
     // Open the file
     rTree -> filePointer_.open(fileName, ios::binary | ios::in | ios::out | ios::trunc);
 
@@ -59,7 +61,7 @@ void RTree::insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_t doc,
         newRoot -> addEntry(rootNode_ -> currentMBR_, rootNode_ -> nodeBitmap_, rootNode_ -> childEvents_, rootNode_ -> currEntries_, rootNode_ -> doc_, rootNode_ -> nodeID_);
 
         // Create document
-        newRoot -> createDoc();
+        newRoot -> createDoc(this);
 
         // Free the memory
         delete rootNode_;
@@ -88,6 +90,14 @@ void RTree::saveNode(TreeNode* node) {
     }
     writeNode(node);
     diskIO_++;
+}
+
+
+// Query
+vector<int32_t> RTree::queryMBR(Rectangle MBR) {
+    vector<int32_t> a;
+    rootNode_ -> query(MBR, a, this);
+    return a;
 }
 
 // Retrieve a node using ID
@@ -429,7 +439,9 @@ void RTree::saveTree() {
 
     filePointer_.write((char *) &bitmapSize_, sizeof(bitmapSize_)); 
 
-    filePointer_.write((char *) &nextPage_, sizeof(nextPage_));    
+    filePointer_.write((char *) &nextPage_, sizeof(nextPage_));  
+
+    filePointer_.write((char *) &nextDoc_, sizeof(nextDoc_));  
 
     filePointer_.flush();
     
@@ -460,6 +472,8 @@ RTree* RTree::LoadIndex(string fileName) {
     rTree -> filePointer_.read((char *) &(rTree -> bitmapSize_), sizeof(rTree -> bitmapSize_));
 
     rTree -> filePointer_.read((char *) &(rTree -> nextPage_), sizeof(rTree -> nextPage_));  
+
+    rTree -> filePointer_.read((char *) &(rTree -> nextDoc_), sizeof(rTree -> nextDoc_));  
 
     // Get the root node
     rTree -> rootNode_ = nullptr;

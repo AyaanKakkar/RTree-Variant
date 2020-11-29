@@ -21,7 +21,7 @@ int32_t LeafNode::insert(Rectangle MBR, int32_t* bitmap, int32_t pointer, int32_
     }
 
     // Create doc
-    createDoc();
+    createDoc(rTree);
 
     // Save changes to the disk
     rTree -> saveNode(this);
@@ -84,3 +84,17 @@ TreeNode* LeafNode::createSplitNode() {
     return new LeafNode(maxEntries_, minEntries_, bitmapSize_);
 }
 
+// Query
+void LeafNode::query(Rectangle MBR, vector<int32_t>& a, RTree* rTree) {
+    
+    Rectangle b = Rectangle::intersection(currentMBR_, MBR);
+
+    if (b.isValid()) {
+        for (int i = 0; i < currEntries_; i++) {
+            Rectangle x = Rectangle::intersection(MBR_[i], MBR);
+            if (x.isValid()) {
+                a.push_back(childPointers_[i]);
+            }
+        }
+    }
+}

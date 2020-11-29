@@ -3,6 +3,7 @@
 
 #include <string>
 #include <fstream>
+#include <vector>
 #include "rectangle.h"
 #include "treeNode.h"
 #include "leafNode.h"
@@ -28,6 +29,7 @@ class RTree {
         int32_t minEntries_; // Min Entries in the node
         int32_t bitmapSize_; // Size of the bitmap
         int32_t nextPage_; // Next available page
+        int32_t nextDoc_;
 
         // Root node
         TreeNode* rootNode_; // Pointer to the root node
@@ -58,6 +60,9 @@ class RTree {
 
         // Print tree for debugging
         void printTree();
+
+        // Query
+        vector<int32_t> queryMBR(Rectangle MBR);
 
         // Destructor
         ~RTree();

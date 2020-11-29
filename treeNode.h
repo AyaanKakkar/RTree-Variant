@@ -3,6 +3,7 @@
 #define TIMESLOTS 24
 #include <cstdint>
 #include <list>
+#include <vector>
 #include "rectangle.h"
 #include "event.h"
 
@@ -55,7 +56,7 @@ class TreeNode {
 
 
         // Doc creation
-        void createDoc();
+        void createDoc(RTree* rTree);
         
         // Split node
         int32_t split(RTree *rTree);
@@ -89,6 +90,9 @@ class TreeNode {
         
         // Print function
         virtual void printTree(RTree* rTree);
+
+        // Query
+        virtual void query(Rectangle MBR, vector<int32_t>& a, RTree* rTree);
 
     friend class RTree;
 };
