@@ -1,10 +1,11 @@
 #include "rtree.h"
+#include "generate.h"
+#include "saveGraph.h"
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
 #include <chrono>
 #include <iomanip>
-#include <generate.h>
 #include <vector>
 
 using namespace std;
@@ -13,11 +14,11 @@ const string indexFileName = "exp2.bin";
 
 const int32_t pageSize = 4096;
 const int32_t maxEntries = 64;
-const int32_t minEntries = 2;
-const int32_t bitmapSize = 2;
+const int32_t minEntries = 16;
+const int32_t bitmapSize = 5;
 const int n_pois = 5000;
-const int radius = 3;
-const double factors[] = {0.1, 0.3, 0.5, 0.7, 0.9};
+const int radius = 2;
+vector<double> factors{0.1, 0.3, 0.5, 0.7, 0.9};
 const int n_sizes = 5;
 
 
@@ -56,13 +57,8 @@ void getData(int query) {
         delete[] events;
         delete[] bitmaps;
     }
-
-    if (query == -1) {
-        // Synthetic Data
-    }
-    else {
-        poi_count = generateData(n_pois, factors[query], bitmapSize, poiID, MBRs, eventCounts, events, docID, bitmaps);
-    }
+    
+    poi_count = generateData(n_pois, factors[query], bitmapSize, poiID, MBRs, eventCounts, events, docID, bitmaps);
 }
 
 // Returns number of disk IOs
@@ -80,9 +76,11 @@ void buildRTree() {
 int main(int argc, char* argv[]) {
 
     
-    long double timeTaken[n_sizes];
-    int diskIO[n_sizes];
+    vector<double> timeTaken(n_sizes);
+    vector<int> diskIO(n_sizes);
 
+    string outputFNameTime = "exp2_time.data";
+    string outputFNameIO = "exp2_IO.data";
 
     for (int i = 0; i < n_sizes; i++) {
 
@@ -127,6 +125,18 @@ int main(int argc, char* argv[]) {
         cout << "Execution Time : " << fixed << timeTaken[i] << setprecision(12) << "ms" << endl;
 
         cout << endl;
+
+
+        cout << endl;
+        cout << "Writing output to file: " << outputFNameTime << endl;
+        vector<int> outputTime;
+        for (auto x: timeTaken) {
+            outputTime.push_back((int)x);
+        }
+        saveGraph(outputFNameTime, factors, outputTime);
+
+        cout << "Writing output to file: " << outputFNameIO << endl;
+        saveGraph(outputFNameIO, factors, diskIO);
     }
 
     return 0;

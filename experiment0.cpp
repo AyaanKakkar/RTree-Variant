@@ -1,23 +1,27 @@
 #include "rtree.h"
+#include "generate.h"
+#include "load.h"
+#include "saveGraph.h"
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
 #include <chrono>
+#include <vector>
 #include <iomanip>
-#include <generate.h>
 
 using namespace std;
 
 const string indexFileName = "exp0.bin";
 
 const int32_t pageSize = 4096;
-const int32_t maxEntries = 128;
-const int32_t minEntries = 32;
-const int32_t bitmapSize = 5;
+const int32_t maxEntries = 64;
+const int32_t minEntries = 16;
+const int32_t defaultBitmapSize = 5;
 const double skewness_zipf = 0.7;
-const int sizes[] = {100, 1000, 10000};
+vector<int> sizes{100, 1000, 10000};
 const int n_sizes = 3;
 
+int32_t bitmapSize;
 
 int32_t poi_count;
 int32_t* poiID = nullptr;
@@ -56,9 +60,10 @@ void getData(int query) {
     }
 
     if (query == -1) {
-        // Real Data
+        poi_count = loadData(bitmapSize, poiID, MBRs, eventCounts, events, docID, bitmaps);
     }
     else {
+        bitmapSize = defaultBitmapSize;
         poi_count = generateData(query, skewness_zipf, bitmapSize, poiID, MBRs, eventCounts, events, docID, bitmaps);
     }
 }
@@ -78,35 +83,81 @@ int buildRTree() {
 
 
 int main(int argc, char* argv[]) {
-
-    
-    long double timeTaken[n_sizes];
-    int diskIO[n_sizes];
-
-
-    for (int i = 0; i < n_sizes; i++) {
+       
+    if (argc == 2 && (argv[1][0] == 'r' || argv[1][0] == 'R')) {
+        // Real Data
+        string outputFNameTime = "exp0_real_time.data";
+        string outputFNameIO = "exp0_real_IO.data";
 
         remove(indexFileName.c_str());
-        getData(sizes[i]);
 
-        cout << "Query Size : " << sizes[i] << endl;
+        cout << "Using Real Data" << endl;
 
         auto start = chrono::high_resolution_clock::now();
 
-        diskIO[i] = buildRTree();
+        int diskIO = buildRTree();
 
         auto end = chrono::high_resolution_clock::now();
         
-        timeTaken[i] = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+        long double timeTaken = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
 
-        timeTaken[i] *= 1e-6; // Cast to milliseconds
+        timeTaken *= 1e-6; // Cast to milliseconds
 
-        cout << "DISK IOs : " << diskIO[i] << endl;
-        cout << "Build Time : " << fixed << timeTaken[i] << setprecision(12) << "ms" << endl;
+        cout << "DISK IOs : " << diskIO << endl;
+        cout << "Build Time : " << fixed << timeTaken << setprecision(12) << "ms" << endl;
 
         cout << endl;
 
-    }
+        cout << endl;
+        cout << "Writing output to file: " << outputFNameTime << endl;
+        saveGraph(outputFNameTime, vector<int> {poi_count}, vector<int>{(int)timeTaken});
 
+        cout << "Writing output to file: " << outputFNameIO << endl;
+        saveGraph(outputFNameIO, vector<int> {poi_count}, vector<int> {diskIO});
+    }
+    else {
+        // Synthetic Data
+        string outputFNameTime = "exp0_synthetic_time.data";
+        string outputFNameIO = "exp0_synthetic_IO.data";
+
+        vector<long double> timeTaken(n_sizes);
+        vector<int> diskIO(n_sizes);  
+
+        for (int i = 0; i < n_sizes; i++) {
+
+            remove(indexFileName.c_str());
+            getData(sizes[i]);
+
+            cout << "Query Size : " << sizes[i] << endl;
+
+            auto start = chrono::high_resolution_clock::now();
+
+            diskIO[i] = buildRTree();
+
+            auto end = chrono::high_resolution_clock::now();
+            
+            timeTaken[i] = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
+
+            timeTaken[i] *= 1e-6; // Cast to milliseconds
+
+            cout << "DISK IOs : " << diskIO[i] << endl;
+            cout << "Build Time : " << fixed << timeTaken[i] << setprecision(12) << "ms" << endl;
+
+            cout << endl;
+        }
+
+
+        cout << endl;
+        cout << "Writing output to file: " << outputFNameTime << endl;
+        vector<int> outputTime;
+        for (auto x: timeTaken) {
+            outputTime.push_back((int)x);
+        }
+        saveGraph(outputFNameTime, sizes, outputTime);
+
+        cout << "Writing output to file: " << outputFNameIO << endl;
+        saveGraph(outputFNameIO, sizes, diskIO);
+
+    }
     return 0;
 }

@@ -120,7 +120,7 @@ int32_t loadData(int32_t &bitmapSize, int32_t* &poiID, Rectangle* &MBRs, int32_t
         eventList[idIdx[poi]].push_back(temp);
     }
 
-    // int32_t* &poiID, Rectangle* &MBRs, int32_t* &eventCounts, Event** &events, int32_t* &docID, int32_t** &bitmaps
+    eventsDB.close();
     
     // Start intializing
     bitmapSize = bmaps[0].size();
