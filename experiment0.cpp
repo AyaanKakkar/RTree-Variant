@@ -14,8 +14,8 @@ using namespace std;
 const string indexFileName = "exp0.bin";
 
 const int32_t pageSize = 4096;
-const int32_t maxEntries = 64;
-const int32_t minEntries = 16;
+const int32_t maxEntries = 16;
+const int32_t minEntries = 4;
 const int32_t defaultBitmapSize = 5;
 const double skewness_zipf = 0.7;
 vector<int> sizes{100, 1000, 10000};
@@ -90,6 +90,7 @@ int main(int argc, char* argv[]) {
         string outputFNameIO = "exp0_real_IO.data";
 
         remove(indexFileName.c_str());
+        getData(-1);
 
         cout << "Using Real Data" << endl;
 
@@ -110,10 +111,10 @@ int main(int argc, char* argv[]) {
 
         cout << endl;
         cout << "Writing output to file: " << outputFNameTime << endl;
-        saveGraph(outputFNameTime, vector<int> {poi_count}, vector<int>{(int)timeTaken});
+        saveData(outputFNameTime, vector<int> {poi_count}, vector<long double>{timeTaken});
 
         cout << "Writing output to file: " << outputFNameIO << endl;
-        saveGraph(outputFNameIO, vector<int> {poi_count}, vector<int> {diskIO});
+        saveData(outputFNameIO, vector<int> {poi_count}, vector<int> {diskIO});
     }
     else {
         // Synthetic Data
@@ -149,14 +150,10 @@ int main(int argc, char* argv[]) {
 
         cout << endl;
         cout << "Writing output to file: " << outputFNameTime << endl;
-        vector<int> outputTime;
-        for (auto x: timeTaken) {
-            outputTime.push_back((int)x);
-        }
-        saveGraph(outputFNameTime, sizes, outputTime);
+        saveData(outputFNameTime, sizes, timeTaken);
 
         cout << "Writing output to file: " << outputFNameIO << endl;
-        saveGraph(outputFNameIO, sizes, diskIO);
+        saveData(outputFNameIO, sizes, diskIO);
 
     }
     return 0;

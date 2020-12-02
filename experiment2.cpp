@@ -18,7 +18,7 @@ const int32_t minEntries = 16;
 const int32_t bitmapSize = 5;
 const int n_pois = 5000;
 const int radius = 2;
-vector<double> factors{0.1, 0.3, 0.5, 0.7, 0.9};
+vector<long double> factors{0.1, 0.3, 0.5, 0.7, 0.9};
 const int n_sizes = 5;
 
 
@@ -76,7 +76,7 @@ void buildRTree() {
 int main(int argc, char* argv[]) {
 
     
-    vector<double> timeTaken(n_sizes);
+    vector<long double> timeTaken(n_sizes);
     vector<int> diskIO(n_sizes);
 
     string outputFNameTime = "exp2_time.data";
@@ -125,19 +125,15 @@ int main(int argc, char* argv[]) {
         cout << "Execution Time : " << fixed << timeTaken[i] << setprecision(12) << "ms" << endl;
 
         cout << endl;
-
-
-        cout << endl;
-        cout << "Writing output to file: " << outputFNameTime << endl;
-        vector<int> outputTime;
-        for (auto x: timeTaken) {
-            outputTime.push_back((int)x);
-        }
-        saveGraph(outputFNameTime, factors, outputTime);
-
-        cout << "Writing output to file: " << outputFNameIO << endl;
-        saveGraph(outputFNameIO, factors, diskIO);
     }
+
+    cout << endl;
+    cout << "Writing output to file: " << outputFNameTime << endl;
+
+    saveData(outputFNameTime, factors, timeTaken);
+
+    cout << "Writing output to file: " << outputFNameIO << endl;
+    saveData(outputFNameIO, factors, diskIO);
 
     return 0;
 }

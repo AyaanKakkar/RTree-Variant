@@ -17,6 +17,8 @@ const int EVENT_BITMAP = 3;
 
 int32_t generateData(int32_t size, double skew, int32_t bitmapSize, int32_t* &poiID, Rectangle* &MBRs, int32_t* &eventCounts, Event** &events, int32_t* &docID, int32_t** &bitmaps) {
     
+    srand(time(0));
+
     int poiCount = size;
     
     poiID = new int[poiCount];

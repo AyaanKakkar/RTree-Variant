@@ -1,7 +1,7 @@
 #include "rtree.h"
-#include "generate.h"
+#include <generate.h>
 #include "load.h"
-#include "saveGraph.h"
+#include <saveGraph.h>
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
@@ -14,13 +14,13 @@ using namespace std;
 const string indexFileName = "exp1.bin";
 
 const int32_t pageSize = 4096;
-const int32_t maxEntries = 64;
-const int32_t minEntries = 16;
+const int32_t maxEntries = 16;
+const int32_t minEntries = 4;
 const int32_t defaultBitmapSize = 5;
 const int n_pois = 5000;
-const int zipf_skewness = 0.7;
+const double zipf_skewness = 0.7;
 const int n_sizes = 6;
-vector<double> query_sizes(n_sizes);
+vector<long double> query_sizes(n_sizes);
 
 int32_t bitmapSize;
 
@@ -93,8 +93,8 @@ int main(int argc, char* argv[]) {
         indexQuery = 0;
         outputFNameTime = "exp1_real_time.data";
         outputFNameIO = "exp1_real_IO.data";
-        query_sizes[0] = 0.1; query_sizes[1] = 0.2; query_sizes[2] = 0.3;
-        query_sizes[3] = 0.4; query_sizes[4] = 0.5; query_sizes[5] = 0.6;
+        query_sizes[0] = 0.007; query_sizes[1] = 0.014; query_sizes[2] = 0.021;
+        query_sizes[3] = 0.028; query_sizes[4] = 0.035; query_sizes[5] = 0.042;
         cout << "Using Real Data" << endl;
     }
     else {
@@ -152,20 +152,17 @@ int main(int argc, char* argv[]) {
 
         cout << "DISK IOs : " << diskIO[j] << endl;
         cout << "Execution Time : " << fixed << timeTaken[j] << setprecision(12) << "ms" << endl;
-
+        cout << "POIs Found : " << pois.size() << endl;
         cout << endl;
     }
 
     cout << endl;
     cout << "Writing output to file: " << outputFNameTime << endl;
-    vector<int> outputTime;
-    for (auto x: timeTaken) {
-        outputTime.push_back((int)x);
-    }
-    saveGraph(outputFNameTime, query_sizes, outputTime);
+
+    saveData(outputFNameTime, query_sizes, timeTaken);
 
     cout << "Writing output to file: " << outputFNameIO << endl;
-    saveGraph(outputFNameIO, query_sizes, diskIO);
+    saveData(outputFNameIO, query_sizes, diskIO);
 
     return 0;
 }
