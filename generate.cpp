@@ -67,15 +67,38 @@ int32_t generateData(int32_t size, double skew, int32_t bitmapSize, int32_t* &po
 
     int matrix[rows][cols];
 
-    vector<int> temp(bucketsize);
-    for (int i = 0; i < bucketsize; i++) {
-        temp[i] = i;
-    }
+    int bucketIDX = bucketsize - 1;
 
-    for (int i = 0; i < bucketsize; i++) {
-        int idx = rand() % (bucketsize - i);
-        matrix[(int) i / cols][i % cols] = bucket[temp[idx]];
-        temp[idx] = temp[bucketsize - i - 1];
+    int k = 0, l = 0;
+
+    int n = cols;
+    int m = rows;
+ 
+    while (k < m && l < n) {
+
+        for (int i = l; i < n; ++i) {
+            matrix[k][i] = bucket[bucketIDX--];
+        }
+        k++;
+ 
+        for (int i = k; i < m; ++i) {
+            matrix[i][n - 1] = bucket[bucketIDX--];
+        }
+        n--;
+ 
+        if (k < m) {
+            for (int i = n - 1; i >= l; --i) {
+                matrix[m - 1][i] = bucket[bucketIDX--];
+            }
+            m--;
+        }
+ 
+        if (l < n) {
+            for (int i = m - 1; i >= k; --i) {
+                matrix[i][l] = bucket[bucketIDX--];
+            }
+            l++;
+        }
     }
 
     int currIdx = 0;
