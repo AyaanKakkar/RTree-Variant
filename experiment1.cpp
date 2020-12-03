@@ -148,10 +148,8 @@ int main(int argc, char* argv[]) {
 
         timeTaken[j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count(); 
 
-        timeTaken[j] *= 1e-6; // Cast to milliseconds
-
         cout << "DISK IOs : " << diskIO[j] << endl;
-        cout << "Execution Time : " << fixed << timeTaken[j] << setprecision(12) << "ms" << endl;
+        cout << "Execution Time : " << fixed << timeTaken[j] << setprecision(12) << "ns" << endl;
         cout << "POIs Found : " << pois.size() << endl;
         cout << endl;
     }

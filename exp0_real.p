@@ -1,0 +1,13 @@
+set boxwidth 0.1
+set style fill solid
+set autoscale
+set xlabel "Inserted MBRs"
+set title "EVR Tree Creation | Real Data"
+set key noautotitle
+set terminal png size 800,600
+set output'exp0_real_time.png'
+set ylabel "Build Time"
+plot "exp0_real_time.data" with boxes
+set output'exp0_real_IO.png'
+set ylabel "Disk IOs"
+plot "exp0_real_IO.data" with boxes

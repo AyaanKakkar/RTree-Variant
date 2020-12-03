@@ -93,7 +93,6 @@ void RTree::saveNode(TreeNode* node) {
         this -> saveTree();
     }
     writeNode(node);
-    diskIO_++;
 }
 
 
@@ -109,7 +108,6 @@ TreeNode* RTree::getNode(int32_t id) {
     TreeNode* node = this -> readNode(id);
     node -> nodeID_ = id;
     nodesAccessed_++;
-    diskIO_++;
     return node;
 }
 
@@ -280,6 +278,9 @@ void RTree::writeNode(TreeNode* node) {
         filePointer_.write((char*) &nextPage, sizeof(nextPage));
         filePointer_.write((char*) &bytesUsed, sizeof(bytesUsed));
         filePointer_.write(curr, bytesUsed);
+
+        diskIO_++;
+
         curr += bytesUsed;
         currPage = nextPage;
     }
@@ -301,6 +302,7 @@ int32_t RTree::readNodeData(int32_t page, char* &a) {
         filePointer_.seekg(currPage * pageSize_);
         pageData = new char[pageSize_];
         filePointer_.read(pageData, pageSize_);
+        diskIO_++;
         int32_t bytesUsed;
         memcpy((char*) &currPage, pageData, sizeof(currPage));
         memcpy((char*) &bytesUsed, (pageData + sizeof(currPage)), sizeof(bytesUsed));
@@ -467,6 +469,8 @@ void RTree::saveTree() {
     filePointer_.write((char *) &nextDoc_, sizeof(nextDoc_));  
 
     filePointer_.flush();
+
+    diskIO_++;
     
 }
 
